@@ -13,8 +13,13 @@ import numpy as np
 
 
 class Policy(Protocol):
-    def reset(self) -> None:
-        """Called at the start of every episode (clear history / queues)."""
+    def reset(self, seed: int | None = None) -> None:
+        """Called at the start of every episode (clear history / queues).
+
+        seed is the episode's environment seed. Stochastic policies (e.g. diffusion
+        sampling) should seed their own RNG with it, so every episode is reproducible
+        on its own, independent of which episodes ran before it.
+        """
 
     def act(self, obs: dict) -> np.ndarray:
         """obs: dict as returned by FrankaSimEnv (HWC uint8 images, float32 state)."""
@@ -27,7 +32,7 @@ class ReplayPolicy:
         self.actions = np.asarray(actions)
         self.t = 0
 
-    def reset(self):
+    def reset(self, seed=None):
         self.t = 0
 
     def act(self, obs):

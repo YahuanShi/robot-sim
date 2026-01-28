@@ -44,8 +44,8 @@ python scripts/check_abs_actions.py --task can --n 20   # → same successes, fi
 python -m robot_sim.convert --task lift --root data/lerobot/lift_ph_abs_84
 python -m robot_sim.convert --task can  --root data/lerobot/can_ph_abs_84
 
-# 4. Train in a policy repo on the converted dataset, then evaluate it with
-#    robot_sim.evaluate (see the policy interface below)
+# 4. Train in a policy repo on the converted dataset, then evaluate there:
+#    DP:  python eval.py --checkpoint <ckpt> --device cuda --sim lift --n_episodes 50
 ```
 
 ## Conventions
@@ -70,13 +70,14 @@ Things that are easy to get wrong (each one was checked here):
 - **Orientation frame**: the state uses `robot0_eef_quat_site`, the frame the OSC controller tracks. robosuite's legacy `robot0_eef_quat` is ~90° off; with it, "hold the current pose" as an absolute action moves the arm by 10 cm.
 - **6D rotation, not axis-angle**: with the gripper pointing down the rotation is near π, where the axis-angle vector flips sign between neighbouring frames — a terrible regression target. Diffusion Policy converts robomimic absolute actions to 6D for the same reason.
 - **Absolute actions** are the OSC controller's goal pose after applying each recorded delta, read while replaying the demo. Images are rendered during the same replay, so images, states and actions describe one consistent trajectory.
-- **Seeds**: robosuite places objects with the global NumPy RNG, so `reset(seed)` seeds it; episode *i* of an evaluation uses `start_seed + i`.
+- **Seeds**: robosuite places objects with the global NumPy RNG, so `reset(seed)` seeds it; episode *i* of an evaluation uses `start_seed + i`. The same seed goes to `policy.reset(seed)`, so a stochastic policy (Diffusion Policy) reproduces every episode exactly.
 
 ## Policy interface
 
 ```python
 class Policy(Protocol):
-    def reset(self) -> None: ...                 # new episode: clear history / queues
+    def reset(self, seed=None) -> None: ...      # new episode: clear history / queues;
+                                                 # seed = env seed, for stochastic policies
     def act(self, obs: dict) -> np.ndarray: ...  # one observation in, one action out
 
 from robot_sim.evaluate import evaluate

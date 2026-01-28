@@ -2,7 +2,8 @@
 Closed-loop evaluation: run a policy for N seeded episodes and report the success rate.
 
 Episodes use seeds start_seed, start_seed + 1, ... so two policies evaluated with the
-same arguments face exactly the same initial object placements. robomimic's demos
+same arguments face exactly the same initial object placements. The seed is also
+passed to policy.reset(seed), so stochastic policies can make episodes reproducible. robomimic's demos
 were collected on other placements, so the default start seed (100_000) keeps the
 evaluation away from any accidental overlap with training data.
 
@@ -33,7 +34,7 @@ def wilson_interval(successes, n, z=1.96):
 
 def run_episode(env, policy, seed, record=False):
     obs, _ = env.reset(seed=seed)
-    policy.reset()
+    policy.reset(seed=seed)
     frames = [env.render()] if record else []
     success, steps = False, 0
     while True:

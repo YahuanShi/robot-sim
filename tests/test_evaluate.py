@@ -10,8 +10,9 @@ from robot_sim.rotations import matrix_to_rot6d
 class HoldPolicy:
     """Keeps the end effector where it is (never succeeds)."""
 
-    def reset(self):
+    def reset(self, seed=None):
         self.calls = 0
+        self.seeds = getattr(self, "seeds", []) + [seed]
 
     def act(self, obs):
         pos, quat = obs["observation.state"][:3], obs["observation.state"][3:7]
@@ -20,8 +21,9 @@ class HoldPolicy:
 
 
 def test_evaluate_loop_and_videos(tmp_path):
+    policy = HoldPolicy()
     result = evaluate(
-        HoldPolicy(),
+        policy,
         task="lift",
         n_episodes=2,
         image_size=32,
@@ -32,6 +34,7 @@ def test_evaluate_loop_and_videos(tmp_path):
     )
     assert result["successes"] == 0 and result["n_episodes"] == 2
     assert [e["seed"] for e in result["episodes"]] == [100_000, 100_001]
+    assert policy.seeds == [100_000, 100_001]
     assert all(e["steps"] == 4 for e in result["episodes"])
     assert os.listdir(tmp_path / "videos") == ["seed100000_fail.mp4"]
     assert (tmp_path / "result.json").exists()
