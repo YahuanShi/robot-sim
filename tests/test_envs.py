@@ -70,3 +70,20 @@ def test_render_is_upright_rgb(env):
     env.reset(seed=0)
     frame = env.render()
     assert frame.shape == (64, 64, 3) and frame.dtype == np.uint8
+
+
+@pytest.mark.parametrize("task", ["can", "square"])
+def test_every_task_builds_and_steps(task):
+    e = FrankaSimEnv(
+        task, image_size=32, action_space="abs", max_steps=2, render_size=64
+    )
+    try:
+        obs, info = e.reset(seed=0)
+        assert obs["observation.state"].shape == (9,) and info["is_success"] is False
+        pos, quat = obs["observation.state"][:3], obs["observation.state"][3:7]
+        hold = np.concatenate(
+            [pos, matrix_to_rot6d(Rotation.from_quat(quat).as_matrix()), [1.0]]
+        )
+        e.step(hold)
+    finally:
+        e.close()

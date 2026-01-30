@@ -64,6 +64,14 @@ TASKS = {
         "pick up the can and place it in the matching bin",
         max_steps=400,
     ),
+    # Pick up the square nut and fit it onto the square peg (tight tolerance, needs a
+    # rotation). Demos: 107–236 steps. Harder than Lift/Can; DP reports results on it too.
+    "square": TaskSpec(
+        "square",
+        "NutAssemblySquare",
+        "pick up the square nut and place it on the square peg",
+        max_steps=400,
+    ),
 }
 
 

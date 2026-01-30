@@ -11,6 +11,7 @@ Shared Franka Panda simulation for my imitation-learning reimplementations
 |---|---|---|---|---|
 | `lift` | `Lift` | lift the cube | 36–64 steps | 200 / 200 |
 | `can` | `PickPlaceCan` | pick the can, place it in its bin slot | 82–151 steps | 194 / 200 |
+| `square` | `NutAssemblySquare` | pick the square nut, fit it onto the peg | 107–236 steps | 162 / 200 |
 
 ---
 
@@ -36,6 +37,7 @@ Rendering is headless via EGL (`MUJOCO_GL=egl` is set automatically; use `osmesa
 # 1. Compatibility gate: do the recorded actions still reproduce the demos here?
 python scripts/replay_demos.py --task lift --n 200      # → 200/200
 python scripts/replay_demos.py --task can --n 200       # → 194/200 (6 fail and are skipped)
+python scripts/replay_demos.py --task square --n 200    # → 162/200 (tight peg fit: open-loop drift)
 
 # 2. Absolute actions reproduce the demos as well as the original deltas?
 python scripts/check_abs_actions.py --task can --n 20   # → same successes, final eef within ~0.5 mm
@@ -43,6 +45,7 @@ python scripts/check_abs_actions.py --task can --n 20   # → same successes, fi
 # 3. Convert to LeRobot v3 (downloads the robomimic file on first use, ~1 min per 40 demos)
 python -m robot_sim.convert --task lift --root data/lerobot/lift_ph_abs_84
 python -m robot_sim.convert --task can  --root data/lerobot/can_ph_abs_84
+python -m robot_sim.convert --task square --root data/lerobot/square_ph_abs_84
 
 # 4. Train in a policy repo on the converted dataset, then evaluate there:
 #    DP:  python eval.py --checkpoint <ckpt> --device cuda --sim lift --n_episodes 50
