@@ -19,6 +19,7 @@ Shared Franka Panda simulation for my imitation-learning reimplementations
 
 ```bash
 uv sync --extra convert --extra dev        # own venv (.venv), incl. LeRobot for conversion
+pre-commit install                          # optional: ruff on every commit (as in CI)
 
 # Inside a policy repo's environment (editable, so changes here apply immediately):
 uv pip install --python DP/bin/python -e ../robot-sim                         # diffusion-policy-reimplementation
@@ -106,5 +107,6 @@ robot_sim/
 scripts/
 ├── replay_demos.py       # dataset ↔ simulator compatibility check
 └── check_abs_actions.py  # absolute-action conversion check
-tests/                    # pytest (dataset-dependent tests skip if files are missing)
+tests/                    # pytest (dataset-dependent tests skip if files are missing);
+                          # CI runs ruff + tests with OSMesa rendering (.github/workflows/ci.yml)
 ```

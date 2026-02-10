@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    env:
+      # No GPU on the runner: render with software OpenGL instead of EGL
+      MUJOCO_GL: osmesa
+      PYOPENGL_PLATFORM: osmesa
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OSMesa
+        run: sudo apt-get update && sudo apt-get install -y libosmesa6-dev
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Lint
+        run: uvx ruff@0.15.5 check
+
+      - name: Test
+        # Dataset-dependent tests skip: the robomimic files are not downloaded in CI
+        run: uv run pytest tests/ -v --tb=short
