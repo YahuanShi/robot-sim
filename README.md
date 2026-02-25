@@ -1,7 +1,8 @@
 # robot-sim
 
 Shared Franka Panda simulation for my imitation-learning reimplementations
-([diffusion-policy-reimplementation](../diffusion-policy-reimplementation)).
+([diffusion-policy-reimplementation](../diffusion-policy-reimplementation),
+[act-reimplementation](../act-reimplementation)).
 
 - **Simulator**: [robosuite](https://robosuite.ai) 1.5 (MuJoCo), Franka Panda + parallel gripper, OSC_POSE control at 20 Hz
 - **Data**: [robomimic](https://robomimic.github.io) v1.5 proficient-human demos (200 per task), converted to **LeRobot v3** with rendered images
@@ -13,6 +14,33 @@ Shared Franka Panda simulation for my imitation-learning reimplementations
 | `can` | `PickPlaceCan` | pick the can, place it in its bin slot | 82–151 steps | 194 / 200 |
 | `square` | `NutAssemblySquare` | pick the square nut, fit it onto the peg | 107–236 steps | 162 / 200 |
 
+## Results (closed loop, 84×84 images, absolute actions)
+
+| Policy | Training | Lift | Can |
+|---|---|---|---|
+| Diffusion Policy (U-Net) | 30k steps | **50/50 = 100%** (93–100%) | **48/50 = 96%** (87–99%) |
+| ACT, chunked execution | 60 epochs | 50/50 = 100% (93–100%) | 40/50 = 80% (67–89%) |
+| ACT, temporal ensembling | 60 epochs | 50/50 = 100% (93–100%) | 44/50 = 88% (76–94%) |
+
+50 episodes per entry, seeds 100000–100049 (the `robot_sim.evaluate` default), success
+rate with 95% Wilson interval. Both policies see the same initial object placements.
+
+- **Lift** is saturated: every policy succeeds on every seed.
+- **Can**: Diffusion Policy's 96% and chunked ACT's 80% have non-overlapping intervals;
+  against temporal ensembling (88%) the intervals overlap, so that gap is a trend, not a
+  result. This matches the direction reported in the Diffusion Policy paper (Chi et al., RSS 2023).
+- **Temporal ensembling** helps ACT on Can (+4 episodes); 5 of its 6 failures are seeds
+  that chunked execution also fails (100011, 100032, 100036, 100039, 100047).
+- Both use their papers' default hyperparameters (DP: To=2, Ta=8, horizon 16, DDIM 16
+  steps at inference; ACT: chunk 20, kl_weight 10), untuned for these tasks — this compares
+  defaults, not each method's ceiling.
+- Diffusion Policy samples from noise; its adapter seeds torch with the episode seed, so
+  its numbers are reproducible up to pixel-level EGL rendering noise (a few dozen edge
+  pixels differ between processes), which can shift an episode by a step or two.
+
+Training: DP `--max_steps 30000 --batch_size 64 --crop 76 76`; ACT `--chunk_size 20
+--batch_size 32 --epochs 60 --crop_ratio 0.9`, evaluated with the lowest-val-loss checkpoint.
+
 ---
 
 ## Setup
@@ -23,13 +51,14 @@ pre-commit install                          # optional: ruff on every commit (as
 
 # Inside a policy repo's environment (editable, so changes here apply immediately):
 uv pip install --python DP/bin/python -e ../robot-sim                         # diffusion-policy-reimplementation
+uv pip install --python .venv/bin/python -e ../robot-sim "opencv-python<5"    # act-reimplementation
 ```
 
 Rendering is headless via EGL (`MUJOCO_GL=egl` is set automatically; use `osmesa` without a GPU).
 
 **Pinned versions, and why**
 - `robosuite==1.5.1` — 1.5.2 pins `mink==0.0.5`, which requires `numpy<2`; LeRobot 0.4 (used by both policy repos) needs `numpy>=2`.
-- `mujoco>=3.3,<3.9` — newer MuJoCo breaks robosuite 1.5.1 (joint-type assertion at env creation).
+- `mujoco>=3.3,<3.9` — newer MuJoCo breaks robosuite 1.5.1 (joint-type assertion at env creation). 3.8.1 is also what the ACT repo's `gym-aloha`/`dm_control` use, so both coexist in one environment.
 - `lerobot>=0.4,<0.5` — 0.5 requires Python ≥ 3.12; the policy repos are on 3.10.
 
 ## Workflow
@@ -50,6 +79,7 @@ python -m robot_sim.convert --task square --root data/lerobot/square_ph_abs_84
 
 # 4. Train in a policy repo on the converted dataset, then evaluate there:
 #    DP:  python eval.py --checkpoint <ckpt> --device cuda --sim lift --n_episodes 50
+#    ACT: python eval.py --ckpt_dir <dir> --env franka --task lift [--temporal_agg]
 ```
 
 ## Conventions

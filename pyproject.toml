@@ -5,7 +5,7 @@ description = "Shared Franka Panda simulation (robosuite + robomimic) for imitat
 requires-python = ">=3.10,<3.11"
 dependencies = [
     "robosuite==1.5.1",  # 1.5.2 pins mink==0.0.5 → numpy<2, clashing with lerobot
-    "mujoco>=3.3,<3.9",  # robosuite 1.5.1 breaks on newer mujoco
+    "mujoco>=3.3,<3.9",  # robosuite 1.5.1 breaks on newer mujoco; ACT (dm_control) uses 3.8.1
     "numpy",
     "h5py",
     "gymnasium>=1.0",
