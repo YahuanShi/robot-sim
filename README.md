@@ -22,6 +22,10 @@ Shared Franka Panda simulation for my imitation-learning reimplementations
 | ACT, chunked execution | 60 epochs | 50/50 = 100% (93–100%) | 40/50 = 80% (67–89%) |
 | ACT, temporal ensembling | 60 epochs | 50/50 = 100% (93–100%) | 44/50 = 88% (76–94%) |
 
+![Can, seed 100000: Diffusion Policy and ACT with temporal ensembling place the can, chunked ACT drops it](docs/can_seed100000.gif)
+
+*Can, seed 100000 — the same initial placement for every policy.*
+
 50 episodes per entry, seeds 100000–100049 (the `robot_sim.evaluate` default), success
 rate with 95% Wilson interval. Both policies see the same initial object placements.
 
@@ -77,9 +81,10 @@ python -m robot_sim.convert --task lift --root data/lerobot/lift_ph_abs_84
 python -m robot_sim.convert --task can  --root data/lerobot/can_ph_abs_84
 python -m robot_sim.convert --task square --root data/lerobot/square_ph_abs_84
 
-# 4. Train in a policy repo on the converted dataset, then evaluate there:
-#    DP:  python eval.py --checkpoint <ckpt> --device cuda --sim lift --n_episodes 50
-#    ACT: python eval.py --ckpt_dir <dir> --env franka --task lift [--temporal_agg]
+# 4. Train in a policy repo on the converted dataset, then evaluate there
+#    (both repos share the same CLI):
+#    DP:  python eval.py --checkpoint <policy_final.pt> --device cuda --sim lift --n_episodes 50
+#    ACT: python eval.py --checkpoint <policy_best.pt>  --sim lift --n_episodes 50 [--temporal_agg]
 ```
 
 ## Conventions
@@ -136,7 +141,8 @@ robot_sim/
 └── evaluate.py    # seeded closed-loop evaluation, success rate + Wilson CI, videos
 scripts/
 ├── replay_demos.py       # dataset ↔ simulator compatibility check
-└── check_abs_actions.py  # absolute-action conversion check
+├── check_abs_actions.py  # absolute-action conversion check
+└── make_demo_gif.py      # tile evaluation videos into a labelled README GIF
 tests/                    # pytest (dataset-dependent tests skip if files are missing);
                           # CI runs ruff + tests with OSMesa rendering (.github/workflows/ci.yml)
 ```

@@ -7,3 +7,4 @@ outputs/
 *.gif
 .pytest_cache/
 .ruff_cache/
+!docs/*.gif
