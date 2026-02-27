@@ -16,11 +16,11 @@ Shared Franka Panda simulation for my imitation-learning reimplementations
 
 ## Results (closed loop, 84×84 images, absolute actions)
 
-| Policy | Training | Lift | Can |
-|---|---|---|---|
-| Diffusion Policy (U-Net) | 30k steps | **50/50 = 100%** (93–100%) | **48/50 = 96%** (87–99%) |
-| ACT, chunked execution | 60 epochs | 50/50 = 100% (93–100%) | 40/50 = 80% (67–89%) |
-| ACT, temporal ensembling | 60 epochs | 50/50 = 100% (93–100%) | 44/50 = 88% (76–94%) |
+| Policy | Training | Lift | Can | Square |
+|---|---|---|---|---|
+| Diffusion Policy (U-Net) | 30k steps | **50/50 = 100%** (93–100%) | **48/50 = 96%** (87–99%) | 35/50 = 70% (56–81%) |
+| ACT, chunked execution | 60 epochs | 50/50 = 100% (93–100%) | 40/50 = 80% (67–89%) | 33/50 = 66% (52–78%) |
+| ACT, temporal ensembling | 60 epochs | 50/50 = 100% (93–100%) | 44/50 = 88% (76–94%) | 35/50 = 70% (56–81%) |
 
 ![Can, seed 100000: Diffusion Policy and ACT with temporal ensembling place the can, chunked ACT drops it](docs/can_seed100000.gif)
 
@@ -35,6 +35,10 @@ rate with 95% Wilson interval. Both policies see the same initial object placeme
   result. This matches the direction reported in the Diffusion Policy paper (Chi et al., RSS 2023).
 - **Temporal ensembling** helps ACT on Can (+4 episodes); 5 of its 6 failures are seeds
   that chunked execution also fails (100011, 100032, 100036, 100039, 100047).
+- **Square** is the hardest task (tight peg fit; only 162 of the 200 demos replay
+  successfully) and separates neither method: 66–70% for all three, intervals nearly
+  identical. The failures differ, though — Diffusion Policy and ACT with temporal
+  ensembling share only 6 of their 15 failed seeds each.
 - Both use their papers' default hyperparameters (DP: To=2, Ta=8, horizon 16, DDIM 16
   steps at inference; ACT: chunk 20, kl_weight 10), untuned for these tasks — this compares
   defaults, not each method's ceiling.
@@ -44,6 +48,23 @@ rate with 95% Wilson interval. Both policies see the same initial object placeme
 
 Training: DP `--max_steps 30000 --batch_size 64 --crop 76 76`; ACT `--chunk_size 20
 --batch_size 32 --epochs 60 --crop_ratio 0.9`, evaluated with the lowest-val-loss checkpoint.
+
+### ACT chunk size (Can)
+
+Same training recipe, only `--chunk_size` changed:
+
+| Chunk size | Chunked execution | Temporal ensembling |
+|---|---|---|
+| 10 | 37/50 = 74% (60–84%) | 37/50 = 74% (60–84%) |
+| **20** (default above) | **40/50 = 80%** (67–89%) | **44/50 = 88%** (76–94%) |
+| 50 | 19/50 = 38% (26–52%) | 32/50 = 64% (50–76%) |
+
+Chunk 20 is best. With chunk 50 the policy executes 50 steps (2.5 s at 20 Hz) open loop,
+so it cannot react when the grasp slips: chunked success halves. Temporal ensembling
+re-queries every step and recovers most of it (38% → 64%). With chunk 10 the two modes tie
+(identical totals, different episodes) — short chunks leave little for ensembling to smooth.
+This is the trade-off from the ACT paper: longer chunks shorten the effective horizon, but
+too long removes closed-loop feedback.
 
 ---
 
