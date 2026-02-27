@@ -1,8 +1,8 @@
 # robot-sim
 
 Shared Franka Panda simulation for my imitation-learning reimplementations
-([diffusion-policy-reimplementation](../diffusion-policy-reimplementation),
-[act-reimplementation](../act-reimplementation)).
+([diffusion-policy-reimplementation](https://github.com/YahuanShi/diffusion-policy-reimplementation),
+[act-reimplementation](https://github.com/YahuanShi/act-reimplementation)).
 
 - **Simulator**: [robosuite](https://robosuite.ai) 1.5 (MuJoCo), Franka Panda + parallel gripper, OSC_POSE control at 20 Hz
 - **Data**: [robomimic](https://robomimic.github.io) v1.5 proficient-human demos (200 per task), converted to **LeRobot v3** with rendered images
