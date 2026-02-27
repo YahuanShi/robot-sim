@@ -8,19 +8,19 @@ on:
 
 jobs:
   lint-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       # No GPU on the runner: render with software OpenGL instead of EGL
       MUJOCO_GL: osmesa
       PYOPENGL_PLATFORM: osmesa
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install OSMesa
         run: sudo apt-get update && sudo apt-get install -y libosmesa6-dev
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.10"
 
