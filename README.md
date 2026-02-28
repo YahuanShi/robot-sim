@@ -36,8 +36,9 @@ rate with 95% Wilson interval. Both policies see the same initial object placeme
 - **Temporal ensembling** helps ACT on Can (+4 episodes); 5 of its 6 failures are seeds
   that chunked execution also fails (100011, 100032, 100036, 100039, 100047).
 - **Square** is the hardest task (tight peg fit; only 162 of the 200 demos replay
-  successfully) and separates neither method: 66–70% for all three, intervals nearly
-  identical. The failures differ, though — Diffusion Policy and ACT with temporal
+  successfully) and separates neither method at these budgets: 66–70% for all three,
+  intervals nearly identical (DP trained longer reaches 90%, see
+  [Training length](#training-length-diffusion-policy-square)). The failures differ, though — Diffusion Policy and ACT with temporal
   ensembling share only 6 of their 15 failed seeds each.
 - Both use their papers' default hyperparameters (DP: To=2, Ta=8, horizon 16, DDIM 16
   steps at inference; ACT: chunk 20, kl_weight 10), untuned for these tasks — this compares
@@ -65,6 +66,20 @@ re-queries every step and recovers most of it (38% → 64%). With chunk 10 the t
 (identical totals, different episodes) — short chunks leave little for ensembling to smooth.
 This is the trade-off from the ACT paper: longer chunks shorten the effective horizon, but
 too long removes closed-loop feedback.
+
+### Training length (Diffusion Policy, Square)
+
+One 150k-step DP run (≈ 397 epochs, cosine schedule over the full run), a checkpoint every
+30k steps, each scored on the same 50 seeds:
+
+| Checkpoint | 30k | 60k | 90k | 120k | 150k |
+|---|---|---|---|---|---|
+| Square | 36/50 = 72% (58–83%) | 40/50 = 80% (67–89%) | **45/50 = 90%** (79–96%) | **45/50 = 90%** (79–96%) | 42/50 = 84% (71–92%) |
+
+The Square tie in the main table is a training-budget effect, not a ceiling: with 3–4× more
+steps Diffusion Policy reaches 90%, 20 points above ACT's 66–70% at 60 epochs (the
+intervals, 79–96% vs 56–81% for temporal ensembling, overlap only at the edge). ACT was not trained longer, so this shows how much DP gains from more training,
+not that ACT would stay at 70%.
 
 ---
 
